@@ -8,3 +8,10 @@ class Parse13thProvisionResponse(BaseModel):
     provision_type: str
     total_cost_centers: int
     items: list[dict]
+
+
+class ParseVacationProvisionResponse(BaseModel):
+    source_files: list[str]
+    provision_type: str
+    total_cost_centers: int
+    items: list[dict]
