@@ -77,10 +77,6 @@ def find_company_cnpj(ws, company_row: int) -> tuple[str | None, str | None]:
 
 
 def parse_competence(text: str) -> str:
-    """
-    Exemplo:
-    'Relatório de provisão de 13º salário 09/2024' -> '2024-09'
-    """
     text = text.upper()
     match = re.search(r"(\d{2})/(\d{4})", text)
     if not match:
@@ -91,15 +87,12 @@ def parse_competence(text: str) -> str:
 
 
 def competence_to_display(competence: str) -> str:
-    """
-    '2024-09' -> '09/2024'
-    """
     year, month = competence.split("-")
     return f"{month}/{year}"
 
 
 def is_header_row(text: str) -> bool:
-    return text.upper().startswith("RELATÓRIO DE PROVISÃO DE 13")
+    return "RELATÓRIO DE PROVISÃO DE 13" in text.upper()
 
 
 def is_company_row(text: str) -> bool:
@@ -111,9 +104,6 @@ def is_cost_center_row(text: str) -> bool:
 
 
 def parse_cost_center(text: str) -> tuple[str, str]:
-    """
-    'TOTAL CENTRO DE CUSTO: 1 - Administrativo'
-    """
     match = re.match(r"TOTAL CENTRO DE CUSTO:\s*(\d+)\s*-\s*(.+)$", text)
     if not match:
         return "", text
@@ -150,7 +140,6 @@ def parse_single_13th_report(path: str | Path) -> list[Provision13thCostCenterSn
         if is_cost_center_row(col_a):
             cost_center_code, cost_center_name = parse_cost_center(col_a)
 
-            # Procurar a linha "Total saldo:" logo abaixo
             scan_row = row + 1
             total_saldo_row = None
 
@@ -180,11 +169,11 @@ def parse_single_13th_report(path: str | Path) -> list[Provision13thCostCenterSn
                         competence=competence,
                         cost_center_code=cost_center_code,
                         cost_center_name=cost_center_name,
-                        total_saldo_13th=to_float(ws.cell(total_saldo_row, 2).value),
-                        total_saldo_fgts=to_float(ws.cell(total_saldo_row, 7).value),
-                        total_saldo_inss=to_float(ws.cell(total_saldo_row, 9).value),
-                        total_saldo_terc=to_float(ws.cell(total_saldo_row, 12).value),
-                        total_saldo_rat=to_float(ws.cell(total_saldo_row, 15).value),
+                        total_saldo_13th=to_float(ws.cell(total_saldo_row, 3).value),
+                        total_saldo_fgts=to_float(ws.cell(total_saldo_row, 8).value),
+                        total_saldo_inss=to_float(ws.cell(total_saldo_row, 10).value),
+                        total_saldo_terc=to_float(ws.cell(total_saldo_row, 13).value),
+                        total_saldo_rat=to_float(ws.cell(total_saldo_row, 16).value),
                     )
                 )
 

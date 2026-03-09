@@ -64,12 +64,16 @@ def parse_cnpj(text: str) -> tuple[str | None, str | None]:
 
 
 def find_company_cnpj(ws, company_row: int) -> tuple[str | None, str | None]:
+    """
+    Procura o CNPJ perto da linha da empresa, porque ele pode estar:
+    - na mesma linha, bem à direita
+    - na linha seguinte
+    """
     max_cols_to_scan = min(ws.max_column, 54)
 
     for row in range(company_row, min(company_row + 2, ws.max_row) + 1):
         for col in range(1, max_cols_to_scan + 1):
-            value = ws.cell(row, col).value
-            text = "" if value is None else str(value).strip()
+            text = norm(ws.cell(row, col).value)
             if "CNPJ" in text.upper():
                 cnpj, cnpj_base = parse_cnpj(text)
                 if cnpj:
@@ -79,6 +83,11 @@ def find_company_cnpj(ws, company_row: int) -> tuple[str | None, str | None]:
 
 
 def parse_competence(text: str) -> str:
+    """
+    Exemplo:
+    'Espelho e resumo da folha mensal referente ao mês de JANEIRO/2026'
+    -> '2026-01'
+    """
     text = text.upper()
 
     months = {
@@ -139,6 +148,11 @@ def is_events_header(left: str, right: str) -> bool:
 
 
 def parse_gps_patronal_value(raw: str) -> float | None:
+    """
+    Exemplo:
+    '26.001,88 (Bruto) - 6.394,21 (Segurados)'
+    => 19607.67
+    """
     if not raw:
         return None
 
@@ -155,9 +169,9 @@ def extract_event_from_row(ws, row: int) -> list[EventItem]:
     items: list[EventItem] = []
 
     # PROVENTOS
-    prov_code = norm(ws.cell(row, 1).value)
-    prov_desc = norm(ws.cell(row, 2).value)
-    prov_amount = ws.cell(row, 20).value
+    prov_code = norm(ws.cell(row, 1).value)  # A
+    prov_desc = norm(ws.cell(row, 2).value)  # B
+    prov_amount = ws.cell(row, 21).value  # U
 
     if prov_code and prov_desc and prov_code not in {"PROVENTOS", "RESUMO GERAL"}:
         amount = to_float(prov_amount)
@@ -172,9 +186,9 @@ def extract_event_from_row(ws, row: int) -> list[EventItem]:
             )
 
     # DESCONTOS
-    disc_code = norm(ws.cell(row, 26).value)
-    disc_desc = norm(ws.cell(row, 29).value)
-    disc_amount = ws.cell(row, 52).value
+    disc_code = norm(ws.cell(row, 27).value)  # AA
+    disc_desc = norm(ws.cell(row, 30).value)  # AD
+    disc_amount = ws.cell(row, 52).value  # AZ
 
     if disc_code and disc_desc and disc_code != "DESCONTOS":
         amount = to_float(disc_amount)
@@ -340,6 +354,7 @@ def parse_payroll_mirror(path: str | Path) -> list[PayrollBlock]:
             gps, new_row = read_gps(ws, row)
             current_block.gps = gps
 
+            # próximo bloco decide se tem centro de custo ou se é totalizador
             current_cost_center_code = None
             current_cost_center_name = None
 

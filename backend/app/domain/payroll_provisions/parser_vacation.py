@@ -76,10 +76,6 @@ def find_company_cnpj(ws, company_row: int) -> tuple[str | None, str | None]:
 
 
 def parse_competence(text: str) -> str:
-    """
-    Exemplo:
-    'Relatório de provisão de férias 09/2024' -> '2024-09'
-    """
     text = text.upper()
     match = re.search(r"(\d{2})/(\d{4})", text)
     if not match:
@@ -95,9 +91,10 @@ def competence_to_display(competence: str) -> str:
 
 
 def is_header_row(text: str) -> bool:
-    return text.upper().startswith(
-        "RELATÓRIO DE PROVISÃO DE FÉRIAS"
-    ) or text.upper().startswith("RELATORIO DE PROVISAO DE FERIAS")
+    u = text.upper()
+    return (
+        "RELATÓRIO DE PROVISÃO DE FÉRIAS" in u or "RELATORIO DE PROVISAO DE FERIAS" in u
+    )
 
 
 def is_company_row(text: str) -> bool:
@@ -109,9 +106,6 @@ def is_cost_center_row(text: str) -> bool:
 
 
 def parse_cost_center(text: str) -> tuple[str, str]:
-    """
-    'TOTAL CENTRO DE CUSTO : 1 - Administrativo'
-    """
     match = re.match(r"TOTAL CENTRO DE CUSTO\s*:\s*(\d+)\s*-\s*(.+)$", text)
     if not match:
         return "", text
@@ -212,22 +206,12 @@ def parse_single_vacation_report(path: str | Path) -> list[VacationSnapshot]:
                         cost_center_name=cost_center_name,
                         total_saldo_vacation=to_float(
                             ws.cell(total_saldo_row, 4).value
-                        ),  # D
-                        total_saldo_bonus=to_float(
-                            ws.cell(total_saldo_row, 7).value
-                        ),  # G
-                        total_saldo_fgts=to_float(
-                            ws.cell(total_saldo_row, 9).value
-                        ),  # I
-                        total_saldo_inss=to_float(
-                            ws.cell(total_saldo_row, 11).value
-                        ),  # K
-                        total_saldo_terc=to_float(
-                            ws.cell(total_saldo_row, 14).value
-                        ),  # N
-                        total_saldo_rat=to_float(
-                            ws.cell(total_saldo_row, 17).value
-                        ),  # Q
+                        ),
+                        total_saldo_bonus=to_float(ws.cell(total_saldo_row, 7).value),
+                        total_saldo_fgts=to_float(ws.cell(total_saldo_row, 9).value),
+                        total_saldo_inss=to_float(ws.cell(total_saldo_row, 11).value),
+                        total_saldo_terc=to_float(ws.cell(total_saldo_row, 14).value),
+                        total_saldo_rat=to_float(ws.cell(total_saldo_row, 17).value),
                     )
                 )
 
@@ -265,9 +249,7 @@ def parse_vacation_reports(
     competence_b = snapshots_b[0].competence
 
     if competence_a == competence_b:
-        raise ValueError(
-            "Os dois relatórios possuem a mesma competência. É necessário enviar competências diferentes."
-        )
+        raise ValueError("Os dois relatórios possuem a mesma competência.")
 
     if competence_a < competence_b:
         previous_snapshots = snapshots_a
@@ -284,7 +266,6 @@ def parse_vacation_reports(
     current_index = build_snapshot_index(current_snapshots)
 
     all_keys = sorted(set(previous_index.keys()) | set(current_index.keys()))
-
     results: list[Provision13thResult] = []
 
     for key in all_keys:
