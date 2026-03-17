@@ -2,37 +2,34 @@ from __future__ import annotations
 
 import shutil
 import tempfile
+from dataclasses import asdict
 from pathlib import Path
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
 
 from app.domain.payroll_provisions.service import (
-    build_13th_provision_payload,
-    build_vacation_provision_payload,
+    get_13th_provision_results,
+    get_vacation_provision_results,
 )
 from app.schemas.payroll_provisions import (
     Parse13thProvisionResponse,
     ParseVacationProvisionResponse,
+    ProvisionResultOut,
 )
 
 router = APIRouter()
 
 
-def validate_excel_upload(file_a: UploadFile, file_b: UploadFile) -> tuple[str, str]:
+def _validate_excel_pair(file_a: UploadFile, file_b: UploadFile) -> None:
     if not file_a.filename or not file_b.filename:
         raise HTTPException(
             status_code=400, detail="Envie os dois arquivos da provisão."
         )
-
-    suffix_a = Path(file_a.filename).suffix.lower()
-    suffix_b = Path(file_b.filename).suffix.lower()
-
-    if suffix_a not in {".xlsx", ".xlsm"} or suffix_b not in {".xlsx", ".xlsm"}:
-        raise HTTPException(
-            status_code=400, detail="Envie arquivos Excel válidos (.xlsx ou .xlsm)."
-        )
-
-    return file_a.filename, file_b.filename
+    for f in (file_a, file_b):
+        if Path(f.filename).suffix.lower() not in {".xlsx", ".xlsm"}:
+            raise HTTPException(
+                status_code=400, detail="Envie arquivos Excel válidos (.xlsx ou .xlsm)."
+            )
 
 
 @router.post(
@@ -42,26 +39,25 @@ async def parse_13th_provision(
     file_a: UploadFile = File(...),
     file_b: UploadFile = File(...),
 ) -> Parse13thProvisionResponse:
-    validate_excel_upload(file_a, file_b)
+    _validate_excel_pair(file_a, file_b)
 
     temp_dir = Path(tempfile.mkdtemp(prefix="payroll_provision_13th_"))
-    temp_file_a = temp_dir / f"a_{file_a.filename}"
-    temp_file_b = temp_dir / f"b_{file_b.filename}"
+    temp_a = temp_dir / f"a_{file_a.filename}"
+    temp_b = temp_dir / f"b_{file_b.filename}"
 
     try:
-        with temp_file_a.open("wb") as buffer:
-            shutil.copyfileobj(file_a.file, buffer)
+        with temp_a.open("wb") as buf:
+            shutil.copyfileobj(file_a.file, buf)
+        with temp_b.open("wb") as buf:
+            shutil.copyfileobj(file_b.file, buf)
 
-        with temp_file_b.open("wb") as buffer:
-            shutil.copyfileobj(file_b.file, buffer)
-
-        payload = build_13th_provision_payload(
-            previous_or_current_file_a=temp_file_a,
-            previous_or_current_file_b=temp_file_b,
-            source_filename_a=file_a.filename,
-            source_filename_b=file_b.filename,
+        results = get_13th_provision_results(temp_a, temp_b)
+        return Parse13thProvisionResponse(
+            source_files=[file_a.filename, file_b.filename],
+            provision_type="13th_salary",
+            total_cost_centers=len(results),
+            items=[ProvisionResultOut.model_validate(asdict(r)) for r in results],
         )
-        return Parse13thProvisionResponse(**payload)
 
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -71,10 +67,10 @@ async def parse_13th_provision(
         ) from exc
     finally:
         try:
-            if temp_file_a.exists():
-                temp_file_a.unlink()
-            if temp_file_b.exists():
-                temp_file_b.unlink()
+            if temp_a.exists():
+                temp_a.unlink()
+            if temp_b.exists():
+                temp_b.unlink()
             temp_dir.rmdir()
         except Exception:
             pass
@@ -88,26 +84,25 @@ async def parse_vacation_provision(
     file_a: UploadFile = File(...),
     file_b: UploadFile = File(...),
 ) -> ParseVacationProvisionResponse:
-    validate_excel_upload(file_a, file_b)
+    _validate_excel_pair(file_a, file_b)
 
     temp_dir = Path(tempfile.mkdtemp(prefix="payroll_provision_vacation_"))
-    temp_file_a = temp_dir / f"a_{file_a.filename}"
-    temp_file_b = temp_dir / f"b_{file_b.filename}"
+    temp_a = temp_dir / f"a_{file_a.filename}"
+    temp_b = temp_dir / f"b_{file_b.filename}"
 
     try:
-        with temp_file_a.open("wb") as buffer:
-            shutil.copyfileobj(file_a.file, buffer)
+        with temp_a.open("wb") as buf:
+            shutil.copyfileobj(file_a.file, buf)
+        with temp_b.open("wb") as buf:
+            shutil.copyfileobj(file_b.file, buf)
 
-        with temp_file_b.open("wb") as buffer:
-            shutil.copyfileobj(file_b.file, buffer)
-
-        payload = build_vacation_provision_payload(
-            previous_or_current_file_a=temp_file_a,
-            previous_or_current_file_b=temp_file_b,
-            source_filename_a=file_a.filename,
-            source_filename_b=file_b.filename,
+        results = get_vacation_provision_results(temp_a, temp_b)
+        return ParseVacationProvisionResponse(
+            source_files=[file_a.filename, file_b.filename],
+            provision_type="vacation",
+            total_cost_centers=len(results),
+            items=[ProvisionResultOut.model_validate(asdict(r)) for r in results],
         )
-        return ParseVacationProvisionResponse(**payload)
 
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -117,10 +112,10 @@ async def parse_vacation_provision(
         ) from exc
     finally:
         try:
-            if temp_file_a.exists():
-                temp_file_a.unlink()
-            if temp_file_b.exists():
-                temp_file_b.unlink()
+            if temp_a.exists():
+                temp_a.unlink()
+            if temp_b.exists():
+                temp_b.unlink()
             temp_dir.rmdir()
         except Exception:
             pass

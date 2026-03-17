@@ -4,23 +4,7 @@ from dataclasses import dataclass, field
 
 
 @dataclass
-class Provision13thCostCenterSnapshot:
-    company_code: str
-    company_name: str
-    company_cnpj: str | None
-    company_cnpj_base: str | None
-    competence: str
-    cost_center_code: str
-    cost_center_name: str
-    total_saldo_13th: float
-    total_saldo_fgts: float
-    total_saldo_inss: float
-    total_saldo_terc: float
-    total_saldo_rat: float
-
-
-@dataclass
-class Provision13thEntry:
+class ProvisionEntry:
     entry_code: str
     entry_description: str
     amount_previous: float
@@ -29,7 +13,7 @@ class Provision13thEntry:
 
 
 @dataclass
-class Provision13thResult:
+class ProvisionResult:
     company_code: str
     company_name: str
     company_cnpj: str | None
@@ -38,4 +22,4 @@ class Provision13thResult:
     competence_current: str
     cost_center_code: str
     cost_center_name: str
-    entries: list[Provision13thEntry] = field(default_factory=list)
+    entries: list[ProvisionEntry] = field(default_factory=list)

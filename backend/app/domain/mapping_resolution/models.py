@@ -1,20 +1,24 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+
+from app.domain.payroll_mirror.models import EventItem, PayrollBlock
 
 
 @dataclass
-class ResolvedPayrollEvent:
+class AccountMapping:
+    credit_account: str | None
+    debit_account: str | None
+    is_mapped: bool
+
+
+@dataclass
+class ResolvedEventItem:
     entry_type: str
     event_code: str
     description: str
     amount: float
-    mapping_status: str  # mapped | unmapped
-    debit_account: str | None = None
-    credit_account: str | None = None
-    history_template: str | None = None
-    output_template_slug: str | None = None
+    mapping: AccountMapping
 
 
 @dataclass
@@ -27,11 +31,7 @@ class ResolvedPayrollBlock:
     cost_center_code: str | None
     cost_center_name: str | None
     is_totalizer: bool
-    source_start_row: int | None
+    events: list[ResolvedEventItem]
     summary: dict[str, float]
-    gps: dict[str, str | float]
-    company_status: str  # matched | unmatched
-    template_status: str  # matched | unmatched
-    cost_center_status: str  # matched | unmatched | skipped
-    resolved_template_slug: str | None
-    events: list[ResolvedPayrollEvent]
+    gps: dict
+    source_start_row: int | None

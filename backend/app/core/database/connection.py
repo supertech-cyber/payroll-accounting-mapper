@@ -1,31 +1,29 @@
 from __future__ import annotations
 
-from contextlib import contextmanager
-
-import psycopg2
-from psycopg2.extras import RealDictCursor
+import asyncpg
 
 from app.core.config.settings import settings
 
-
-@contextmanager
-def get_db_connection():
-    connection = psycopg2.connect(settings.database_url)
-    try:
-        yield connection
-    finally:
-        connection.close()
+_pool: asyncpg.Pool | None = None
 
 
-@contextmanager
-def get_db_cursor():
-    with get_db_connection() as connection:
-        cursor = connection.cursor(cursor_factory=RealDictCursor)
-        try:
-            yield cursor
-            connection.commit()
-        except Exception:
-            connection.rollback()
-            raise
-        finally:
-            cursor.close()
+async def create_pool() -> None:
+    global _pool
+    _pool = await asyncpg.create_pool(
+        settings.database_url,
+        min_size=1,
+        max_size=10,
+    )
+
+
+async def close_pool() -> None:
+    global _pool
+    if _pool:
+        await _pool.close()
+        _pool = None
+
+
+def get_pool() -> asyncpg.Pool:
+    if _pool is None:
+        raise RuntimeError("Database pool is not initialised.")
+    return _pool

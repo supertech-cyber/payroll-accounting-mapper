@@ -1,3 +1,12 @@
+# Environment — never commit real credentials
+.env
+.env.*
+!.env.example
+
+# Database dumps (contain production data)
+backend/database/*.sql.bak
+backend/database/payroll_mapper_production_dump.sql
+
 venv
 
 # Python

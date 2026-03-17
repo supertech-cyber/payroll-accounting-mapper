@@ -1,0 +1,611 @@
+.container {
+  margin-top: 0.5rem;
+}
+
+.title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.metaGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.metaItem {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.metaLabel {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.metaValue {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text);
+  word-break: break-word;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.table thead tr {
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid var(--border);
+}
+
+.table th {
+  padding: 0.6rem 0.875rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 0.6rem 0.875rem;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.right {
+  text-align: right !important;
+}
+
+.positive {
+  color: #4ade80;
+}
+
+.negative {
+  color: #f87171;
+}
+
+.neutral {
+  color: var(--muted);
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.code {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+  background: rgba(124, 128, 153, 0.12);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+}
+
+.entryCode {
+  font-size: 0.75rem;
+  font-family: "SF Mono", "Fira Code", monospace;
+  color: #818cf8;
+  background: rgba(99, 102, 241, 0.1);
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+}
+
+/* ── Mapping status ──────────────────────────────────────────────────────── */
+
+.cellFlex {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.statusDot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dotMapped {
+  background: #4ade80;
+  box-shadow: 0 0 4px rgba(74, 222, 128, 0.4);
+}
+
+.dotUnmapped {
+  background: #f87171;
+  box-shadow: 0 0 4px rgba(248, 113, 113, 0.4);
+}
+
+.ratioFull {
+  color: #4ade80;
+  font-weight: 600;
+}
+
+.ratioPartial {
+  color: #facc15;
+  font-weight: 600;
+}
+
+.ratioNone {
+  color: #f87171;
+  font-weight: 600;
+}
+
+/* ── Clickable row ─────────────────────────────────────────────────────────── */
+
+.clickableRow {
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.clickableRow:hover {
+  background: rgba(129, 140, 248, 0.06);
+}
+
+.rowAllMapped {
+  background: rgba(74, 222, 128, 0.08);
+}
+
+.rowAllMapped:hover {
+  background: rgba(74, 222, 128, 0.14);
+}
+
+.rowHasUnmapped {
+  background: rgba(248, 113, 113, 0.07);
+}
+
+.rowHasUnmapped:hover {
+  background: rgba(248, 113, 113, 0.13);
+}
+
+/* ── CC Entries Modal ─────────────────────────────────────────────────────── */
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 500;
+  padding: 1rem;
+}
+
+.modalPanel {
+  background: var(--surface, #1e2030);
+  border: 1px solid var(--border, #2a2d3e);
+  border-radius: 10px;
+  width: 100%;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.modalHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.modalTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--foreground, #e2e8f0);
+  margin: 0 0 0.2rem;
+}
+
+.modalCompany {
+  font-size: 0.775rem;
+  font-weight: 500;
+  color: var(--muted, #94a3b8);
+  letter-spacing: 0.01em;
+  margin: 0 0 0.3rem;
+  text-transform: uppercase;
+}
+
+.modalSub {
+  font-size: 0.78rem;
+  color: var(--muted, #64748b);
+  margin: 0;
+}
+
+.modalCloseBtn {
+  background: none;
+  border: none;
+  color: var(--muted, #64748b);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0.15rem 0.3rem;
+  border-radius: 4px;
+  transition: color 0.15s;
+}
+
+.modalCloseBtn:hover {
+  color: var(--foreground, #e2e8f0);
+}
+
+.modalError {
+  background: rgba(248, 113, 113, 0.1);
+  border: 1px solid rgba(248, 113, 113, 0.3);
+  color: #f87171;
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
+  margin-bottom: 0.75rem;
+}
+
+.modalLoading {
+  color: var(--muted, #64748b);
+  font-size: 0.82rem;
+  margin-bottom: 0.75rem;
+}
+
+/* ── Map form ─────────────────────────────────────────────────────────────── */
+
+/* Overlay: sits above the CC modal (z-index 600 > 500) */
+.mapModalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 600;
+  padding: 1rem;
+}
+
+.mapModalPanel {
+  background: var(--surface, #1e2030);
+  border: 1px solid rgba(129, 140, 248, 0.35);
+  border-radius: 10px;
+  width: 100%;
+  max-width: 520px;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.65);
+}
+
+.mapContextLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted, #64748b);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border, #2a2d3e);
+  border-radius: 5px;
+  padding: 0.3rem 0.6rem;
+  margin-bottom: 0.75rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.mapFormBox {
+  background: rgba(129, 140, 248, 0.06);
+  border: 1px solid rgba(129, 140, 248, 0.2);
+  border-radius: 8px;
+  padding: 0.875rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.mapFormTitle {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--foreground, #e2e8f0);
+  margin: 0 0 0.75rem;
+}
+
+.mapFormRow {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.mapFormField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex: 1;
+  font-size: 0.78rem;
+  color: var(--muted, #64748b);
+  margin-bottom: 0.5rem;
+}
+
+.mapInput,
+.mapSelect {
+  background: var(--background, #13151e);
+  border: 1px solid var(--border, #2a2d3e);
+  border-radius: 5px;
+  color: var(--foreground, #e2e8f0);
+  font-size: 0.82rem;
+  padding: 0.35rem 0.6rem;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.mapInput:focus,
+.mapSelect:focus {
+  border-color: #818cf8;
+}
+
+.mapError {
+  color: #f87171;
+  font-size: 0.78rem;
+  margin: 0.3rem 0;
+}
+
+.mapFormActions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+}
+
+.mapBtnCancel {
+  background: transparent;
+  border: 1px solid var(--border, #2a2d3e);
+  color: var(--muted, #64748b);
+  border-radius: 5px;
+  font-size: 0.8rem;
+  padding: 0.3rem 0.75rem;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    color 0.15s;
+}
+
+.mapBtnCancel:hover {
+  border-color: var(--foreground, #e2e8f0);
+  color: var(--foreground, #e2e8f0);
+}
+
+.mapBtnSave {
+  background: #818cf8;
+  border: none;
+  color: #fff;
+  border-radius: 5px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.3rem 0.875rem;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.mapBtnSave:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.mapBtnSave:disabled,
+.mapBtnCancel:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Entries table inside modal ───────────────────────────────────────────── */
+
+.entriesTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.entriesTable thead th {
+  text-align: left;
+  padding: 0.35rem 0.5rem;
+  color: var(--muted, #64748b);
+  font-weight: 600;
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border, #2a2d3e);
+}
+
+.entriesTable tbody tr {
+  border-bottom: 1px solid var(--border, #2a2d3e);
+  transition: background 0.1s;
+}
+
+.entriesTable tbody tr:last-child {
+  border-bottom: none;
+}
+
+.entriesTable tbody tr[data-unmapped="true"] {
+  background: rgba(248, 113, 113, 0.03);
+}
+
+.entriesTable td {
+  padding: 0.4rem 0.5rem;
+  color: var(--foreground, #e2e8f0);
+  vertical-align: middle;
+}
+
+.mappedBadge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #4ade80;
+  letter-spacing: 0.02em;
+}
+
+.unmappedBadge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #f87171;
+}
+
+.entryActions {
+  display: flex;
+  gap: 0.35rem;
+  white-space: nowrap;
+}
+
+.mapBtn {
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: rgba(129, 140, 248, 0.12);
+  border: 1px solid rgba(129, 140, 248, 0.3);
+  color: #818cf8;
+  border-radius: 4px;
+  padding: 0.15rem 0.5rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.mapBtn:hover:not(:disabled) {
+  background: rgba(129, 140, 248, 0.22);
+}
+
+.ignoreBtn {
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: rgba(248, 113, 113, 0.08);
+  border: 1px solid rgba(248, 113, 113, 0.25);
+  color: #f87171;
+  border-radius: 4px;
+  padding: 0.15rem 0.5rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.ignoreBtn:hover:not(:disabled) {
+  background: rgba(248, 113, 113, 0.16);
+}
+
+.mapBtn:disabled,
+.ignoreBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── Ignored badge ── */
+.ignoredBadge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #facc15;
+  letter-spacing: 0.02em;
+}
+
+/* ── Summary / GPS sections ── */
+.summarySection {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.6rem 0.875rem;
+  margin-bottom: 0.75rem;
+}
+
+.summaryTitle {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0 0 0.4rem;
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.3rem 1rem;
+}
+
+.summaryItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  padding: 0.1rem 0;
+}
+
+.summaryKey {
+  color: var(--muted);
+}
+
+.summaryValue {
+  color: var(--foreground);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Stacked event layout inside CC modal ───────────────────────────────── */
+
+.eventColumns {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.eventColumn {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.columnTitle {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 0.3rem 0.5rem;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 5px 5px 0 0;
+  border: 1px solid var(--border, #2a2d3e);
+  border-bottom: none;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--foreground, #e2e8f0);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.columnTotal {
+  font-variant-numeric: tabular-nums;
+  color: var(--muted, #94a3b8);
+  font-weight: 500;
+}
+
+/* ── Summary | GPS side-by-side row ─────────────────────────────────────── */
+
+.summaryRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 700px) {
+  .summaryRow {
+    grid-template-columns: 1fr;
+  }
+}

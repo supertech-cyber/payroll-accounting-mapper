@@ -1,0 +1,48 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg: #0f1117;
+  --surface: #16191f;
+  --border: #1e2230;
+  --text: #e4e6f0;
+  --muted: #7c8099;
+  --primary: #6366f1;
+  --header-height: 56px;
+}
+
+.shell {
+  display: flex;
+  min-height: calc(100vh - var(--header-height));
+}
+
+.shell-content {
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+}
+
+html,
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+a {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
