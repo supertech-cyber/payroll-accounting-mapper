@@ -8,7 +8,8 @@
 //
 // PRIMEIRA VEZ (setup no servidor):
 //   cd C:\caminho\para\payroll-accounting-mapper
-//   cd backend && python -m venv .venv && .venv\Scripts\pip install -r ..\requirements.txt && cd ..
+//   python -m venv .venv
+//   .venv\Scripts\pip install -r backend\requirements.txt
 //   cd frontend && npm install && npm run build && cd ..
 //   pm2 start ecosystem.config.cjs
 //   pm2 save
@@ -23,21 +24,21 @@ module.exports = {
     // ─── Backend: FastAPI + Uvicorn ────────────────────────────────────────
     {
       name: "payroll-api",
-      // Usa o uvicorn do virtualenv diretamente
-      script: ".venv\\Scripts\\uvicorn.exe",
-      args: "app.main:app --host 0.0.0.0 --port 8000 --workers 2",
+      // .venv fica na RAIZ do projeto, não dentro de backend/
+      // O python do venv chama uvicorn como módulo (-m uvicorn)
+      script: ".venv\\Scripts\\python.exe",
+      args: "-m uvicorn app.main:app --host 0.0.0.0 --port 8000",
       cwd: "./backend",
       interpreter: "none",
       env: {
-        // Força o carregamento do .env.production na raiz do projeto
         APP_ENV: "production",
+        // Adiciona o python do venv ao PATH para que imports funcionem
+        PYTHONPATH: "./backend",
       },
-      // Reinicia automaticamente se cair
       autorestart: true,
       watch: false,
       max_restarts: 10,
       restart_delay: 3000,
-      // Logs
       out_file: "./logs/api-out.log",
       error_file: "./logs/api-error.log",
       time: true,
@@ -46,7 +47,6 @@ module.exports = {
     // ─── Frontend: Next.js ─────────────────────────────────────────────────
     {
       name: "payroll-frontend",
-      // Usa o Next.js do node_modules diretamente via node
       script: "node_modules/next/dist/bin/next",
       args: "start --port 3000",
       cwd: "./frontend",
