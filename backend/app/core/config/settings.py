@@ -17,13 +17,32 @@ if _env_file.exists():
     load_dotenv(_env_file, override=True)
 
 
+def _build_database_url() -> str:
+    """Build the asyncpg connection URL.
+
+    Priority:
+    1. DATABASE_URL (single var, already a full URL)
+    2. DB_HOST / DB_PORT / DB_USER / DB_PASSWORD / DB_NAME (individual vars)
+    3. Hard-coded local dev fallback
+    """
+    if url := os.getenv("DATABASE_URL"):
+        return url
+
+    host = os.getenv("DB_HOST", "localhost")
+    port = os.getenv("DB_PORT", "5432")
+    user = os.getenv("DB_USER", "postgres")
+    password = os.getenv("DB_PASSWORD", "")
+    name = os.getenv("DB_NAME", "payroll_mapper")
+
+    # URL-encode '@' in password so asyncpg parses it correctly
+    password_safe = password.replace("@", "%40")
+    return f"postgresql://{user}:{password_safe}@{host}:{port}/{name}"
+
+
 class Settings:
     app_name: str = os.getenv("APP_NAME", "Payroll Accounting Mapper API")
     app_version: str = "0.4.0"
-    database_url: str = os.getenv(
-        "DATABASE_URL",
-        "postgresql://postgres:CHANGE_ME@localhost:5433/payroll_mapper",
-    )
+    database_url: str = _build_database_url()
 
     # Comma-separated list of allowed CORS origins
     # e.g. CORS_ORIGINS=http://192.168.120.210:3000,http://localhost:3000
