@@ -12,6 +12,7 @@ from app.api.v1.routes.events import router as events_router
 from app.api.v1.routes.fpa_export import router as fpa_export_router
 from app.api.v1.routes.tags import router as tags_router
 from app.core.database.connection import create_pool, close_pool
+from app.core.config.settings import settings
 
 
 @asynccontextmanager
@@ -30,10 +31,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-    ],
+    allow_origins=settings.cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

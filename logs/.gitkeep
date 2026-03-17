@@ -1,0 +1,2 @@
+# Logs são gerados em runtime pelo PM2
+*.log

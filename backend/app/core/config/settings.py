@@ -25,5 +25,15 @@ class Settings:
         "postgresql://postgres:CHANGE_ME@localhost:5433/payroll_mapper",
     )
 
+    # Comma-separated list of allowed CORS origins
+    # e.g. CORS_ORIGINS=http://192.168.120.210:3000,http://localhost:3000
+    @property
+    def cors_origins(self) -> list[str]:
+        raw = os.getenv(
+            "CORS_ORIGINS",
+            "http://localhost:3000,http://127.0.0.1:3000",
+        )
+        return [o.strip() for o in raw.split(",") if o.strip()]
+
 
 settings = Settings()

@@ -2,10 +2,14 @@
 .env
 .env.*
 !.env.example
+!.env.production
 
 # Database dumps (contain production data)
 backend/database/*.sql.bak
 backend/database/payroll_mapper_production_dump.sql
+
+# PM2 runtime logs
+logs/*.log
 
 venv
 
