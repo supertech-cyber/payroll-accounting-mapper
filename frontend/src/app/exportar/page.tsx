@@ -83,8 +83,10 @@ function buildMirrorPreviewGroups(
       else unmapped++;
     }
     for (const e of b.events) checkCode(e.event_code);
-    for (const key of Object.keys(b.summary ?? {})) checkCode(key);
-    for (const key of Object.keys(b.gps ?? {})) checkCode(key);
+    for (const [key, val] of Object.entries(b.summary ?? {}))
+      if (typeof val === "number" && val !== 0) checkCode(key);
+    for (const [key, val] of Object.entries(b.gps ?? {}))
+      if (typeof val === "number" && val !== 0) checkCode(key);
     groups.get(key)!.blocks.push({
       ccCode: b.cost_center_code ?? "—",
       ccName: b.cost_center_name ?? "",
@@ -269,7 +271,7 @@ function buildMirrorBlocks(
       .map(([key, val]) => ({
         entry_type: "SUM",
         event_code: key,
-        description: key,
+        description: eventByCode.get(key)?.description ?? key,
         amount: val as number,
         mapping: resolveMapping(key),
       }));
@@ -280,7 +282,7 @@ function buildMirrorBlocks(
       .map(([key, val]) => ({
         entry_type: "GPS",
         event_code: key,
-        description: key,
+        description: eventByCode.get(key)?.description ?? key,
         amount: val as number,
         mapping: resolveMapping(key),
       }));
