@@ -75,6 +75,19 @@ def _is_events_header(left: str, right: str) -> bool:
     return left.startswith("PROVENTOS") or right.startswith("DESCONTOS")
 
 
+def _find_descontos_col(ws: Any, header_row: int) -> int:
+    """
+    Scan the header row to find the column that contains 'DESCONTOS'.
+    Different file generations may shift the layout by 1+ columns.
+    Falls back to column 27 (AA) if not found.
+    """
+    for col in range(1, ws.max_column + 1):
+        v = norm(ws.cell(header_row, col).value)
+        if v.startswith("DESCONTOS"):
+            return col
+    return 27  # original / fallback layout
+
+
 def _parse_gps_patronal_value(raw: str) -> float | None:
     """
     Example:
@@ -89,12 +102,27 @@ def _parse_gps_patronal_value(raw: str) -> float | None:
     return round(to_float(values[0]) - to_float(values[1]), 2)
 
 
-def _extract_event_from_row(ws: Any, row: int) -> list[EventItem]:
+def _extract_event_from_row(
+    ws: Any,
+    row: int,
+    descontos_col: int,
+    disc_amount_col: int,
+) -> list[EventItem]:
+    """
+    Extract provento and desconto items from a single data row.
+
+    Column layout is derived dynamically:
+      - prov_code / prov_desc: always cols A / B (fixed)
+      - prov_amount: descontos_col - 6
+      - disc_code:   descontos_col  (same column as DESCONTOS header)
+      - disc_desc:   descontos_col + 3
+      - disc_amount: disc_amount_col  (= ws.max_column - 2)
+    """
     items: list[EventItem] = []
 
-    prov_code = norm(ws.cell(row, 1).value)  # column A
-    prov_desc = norm(ws.cell(row, 2).value)  # column B
-    prov_amount = ws.cell(row, 21).value  # column U
+    prov_code = norm(ws.cell(row, 1).value)  # col A — fixed
+    prov_desc = norm(ws.cell(row, 2).value)  # col B — fixed
+    prov_amount = ws.cell(row, descontos_col - 6).value  # relative to DESCONTOS
     if prov_code and prov_desc and prov_code not in {"PROVENTOS", "RESUMO GERAL"}:
         amount = to_float(prov_amount)
         if amount != 0:
@@ -107,9 +135,9 @@ def _extract_event_from_row(ws: Any, row: int) -> list[EventItem]:
                 )
             )
 
-    disc_code = norm(ws.cell(row, 27).value)  # column AA
-    disc_desc = norm(ws.cell(row, 30).value)  # column AD
-    disc_amount = ws.cell(row, 52).value  # column AZ
+    disc_code = norm(ws.cell(row, descontos_col).value)  # same col as DESCONTOS header
+    disc_desc = norm(ws.cell(row, descontos_col + 3).value)  # 3 cols after DESCONTOS
+    disc_amount = ws.cell(row, disc_amount_col).value  # max_column - 2
     if disc_code and disc_desc and disc_code != "DESCONTOS":
         amount = to_float(disc_amount)
         if amount != 0:
@@ -211,6 +239,11 @@ def parse_payroll_mirror(path: str | Path) -> list[PayrollBlock]:
             continue
 
         if _is_events_header(col_a, col_z):
+            # Detect column layout for this block — different file generations
+            # may have the DESCONTOS section shifted by one or more columns.
+            descontos_col = _find_descontos_col(ws, row)
+            disc_amount_col = ws.max_column - 2
+
             is_totalizer = (
                 current_cost_center_code is None and current_cost_center_name is None
             )
@@ -236,7 +269,9 @@ def parse_payroll_mirror(path: str | Path) -> list[PayrollBlock]:
                     or _is_company_row(a)
                 ):
                     break
-                current_block.events.extend(_extract_event_from_row(ws, row))
+                current_block.events.extend(
+                    _extract_event_from_row(ws, row, descontos_col, disc_amount_col)
+                )
                 row += 1
             continue
 

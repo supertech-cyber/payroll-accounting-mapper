@@ -11,6 +11,9 @@ backend/database/payroll_mapper_production_dump.sql
 # PM2 runtime logs
 logs/*.log
 
+# Uploaded sample / test files (may contain payroll data)
+files/
+
 venv
 
 # Python
