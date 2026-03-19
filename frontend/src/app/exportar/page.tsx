@@ -226,6 +226,80 @@ function buildProvisionPreviewGroups(
   return [...groups.values()];
 }
 
+function buildMirrorBlocks(
+  data: PayrollMirrorResult,
+  eventsFlat: EventFlat[],
+  costCenters: CostCenter[],
+  batchMap: Map<string, number | null>,
+): FpaBlock[] {
+  const eventByCode = new Map(eventsFlat.map((e) => [e.code, e]));
+  const blocks: FpaBlock[] = [];
+
+  for (const b of data.blocks) {
+    const ccForBlock = costCenters.find((cc) => cc.code === b.cost_center_code);
+    const ccId = ccForBlock?.id ?? null;
+
+    function resolveMapping(code: string) {
+      const ev = eventByCode.get(code);
+      if (!ev || !ev.is_active) return null;
+      const best =
+        (ccId != null
+          ? ev.mappings.find((m) => m.cost_center_id === ccId)
+          : undefined) ?? ev.mappings.find((m) => m.cost_center_id === null);
+      if (!best) return null;
+      return {
+        debit_account: best.debit_account,
+        credit_account: best.credit_account,
+        is_mapped: !!(best.debit_account && best.credit_account),
+      };
+    }
+
+    // Eventos de folha com mappings frescos do registry
+    const eventEntries = b.events.map((e) => ({
+      entry_type: e.entry_type,
+      event_code: e.event_code,
+      description: e.description,
+      amount: e.amount,
+      mapping: resolveMapping(e.event_code),
+    }));
+
+    // Entradas do Resumo Geral (valores numéricos)
+    const summaryEntries = Object.entries(b.summary ?? {})
+      .filter(([, val]) => typeof val === "number" && (val as number) !== 0)
+      .map(([key, val]) => ({
+        entry_type: "SUM",
+        event_code: key,
+        description: key,
+        amount: val as number,
+        mapping: resolveMapping(key),
+      }));
+
+    // Entradas do Analítico GPS (apenas valores numéricos — ignora strings brutas)
+    const gpsEntries = Object.entries(b.gps ?? {})
+      .filter(([, val]) => typeof val === "number" && (val as number) !== 0)
+      .map(([key, val]) => ({
+        entry_type: "GPS",
+        event_code: key,
+        description: key,
+        amount: val as number,
+        mapping: resolveMapping(key),
+      }));
+
+    blocks.push({
+      company_code: b.company_code,
+      company_name: b.company_name,
+      company_fpa_batch: batchMap.get(b.company_code ?? "") ?? null,
+      competence: b.competence,
+      cost_center_code: b.cost_center_code,
+      cost_center_name: b.cost_center_name,
+      is_totalizer: b.is_totalizer,
+      events: [...eventEntries, ...summaryEntries, ...gpsEntries],
+    });
+  }
+
+  return blocks;
+}
+
 function mergeBlocksByCC(blocks: FpaBlock[]): FpaBlock[] {
   const merged = new Map<string, FpaBlock>();
   for (const block of blocks) {
@@ -409,60 +483,43 @@ export default function ExportarPage() {
     try {
       const allBlocks: FpaBlock[] = [];
 
+      // Sempre busca mappings frescos — garante que remapeamentos feitos após o
+      // parse sejam refletidos e que entradas de Resumo / GPS sejam incluídas.
+      const [freshEvents, freshCCs] = await Promise.all([
+        fetchAllEventsWithMappings(true),
+        fetchCostCenters(),
+      ]);
+
       if (mirrorData) {
         allBlocks.push(
-          ...mirrorData.blocks.map((b) => ({
-            company_code: b.company_code,
-            company_name: b.company_name,
-            company_fpa_batch:
-              companyFpaBatch.get(b.company_code ?? "") ?? null,
-            competence: b.competence,
-            cost_center_code: b.cost_center_code,
-            cost_center_name: b.cost_center_name,
-            is_totalizer: b.is_totalizer,
-            events: b.events.map((e) => ({
-              entry_type: e.entry_type,
-              event_code: e.event_code,
-              description: e.description,
-              amount: e.amount,
-              mapping: e.mapping
-                ? {
-                    debit_account: e.mapping.debit_account,
-                    credit_account: e.mapping.credit_account,
-                    is_mapped: e.mapping.is_mapped,
-                  }
-                : null,
-            })),
-          })),
+          ...buildMirrorBlocks(
+            mirrorData,
+            freshEvents,
+            freshCCs,
+            companyFpaBatch,
+          ),
         );
       }
 
-      if (provision13thData || provisionVacationData) {
-        // Always fetch fresh mappings for provisions
-        const [freshEvents, freshCCs] = await Promise.all([
-          fetchAllEventsWithMappings(true),
-          fetchCostCenters(),
-        ]);
-        if (provision13thData) {
-          allBlocks.push(
-            ...buildProvisionBlocks(
-              provision13thData,
-              freshEvents,
-              freshCCs,
-              companyFpaBatch,
-            ),
-          );
-        }
-        if (provisionVacationData) {
-          allBlocks.push(
-            ...buildProvisionBlocks(
-              provisionVacationData,
-              freshEvents,
-              freshCCs,
-              companyFpaBatch,
-            ),
-          );
-        }
+      if (provision13thData) {
+        allBlocks.push(
+          ...buildProvisionBlocks(
+            provision13thData,
+            freshEvents,
+            freshCCs,
+            companyFpaBatch,
+          ),
+        );
+      }
+      if (provisionVacationData) {
+        allBlocks.push(
+          ...buildProvisionBlocks(
+            provisionVacationData,
+            freshEvents,
+            freshCCs,
+            companyFpaBatch,
+          ),
+        );
       }
 
       // Merge blocks with the same (company, CC) → one .fpa file each
