@@ -56,8 +56,8 @@ function companyToForm(c: Company): FormData {
   return {
     code: c.code,
     name: c.name,
-    cnpj: c.cnpj ?? "",
-    cnpj_base: c.cnpj_base ?? "",
+    cnpj: c.cnpj ? formatCnpj(c.cnpj) : "",
+    cnpj_base: c.cnpj_base ? formatCnpjBase(c.cnpj_base) : "",
     output_template: c.output_template ?? "",
     fpa_batch: c.fpa_batch != null ? String(c.fpa_batch) : "",
     tag: c.tag ?? "",
@@ -137,11 +137,13 @@ export default function CompaniesTable() {
     setSaving(true);
     setFormError(null);
     try {
+      const cnpjDigits = form.cnpj.replace(/\D/g, "") || null;
+      const cnpjBaseDigits = form.cnpj_base.replace(/\D/g, "") || null;
       if (modal.editing) {
         await updateCompany(modal.editing.id, {
           name: form.name.trim(),
-          cnpj: form.cnpj.trim() || null,
-          cnpj_base: form.cnpj_base.trim() || null,
+          cnpj: cnpjDigits,
+          cnpj_base: cnpjBaseDigits,
           output_template: form.output_template || null,
           fpa_batch: form.fpa_batch.trim()
             ? Number(form.fpa_batch.trim())
@@ -152,8 +154,8 @@ export default function CompaniesTable() {
         await createCompany({
           code: form.code.trim(),
           name: form.name.trim(),
-          cnpj: form.cnpj.trim() || null,
-          cnpj_base: form.cnpj_base.trim() || null,
+          cnpj: cnpjDigits,
+          cnpj_base: cnpjBaseDigits,
           output_template: form.output_template || null,
           fpa_batch: form.fpa_batch.trim()
             ? Number(form.fpa_batch.trim())
