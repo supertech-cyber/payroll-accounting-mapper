@@ -206,6 +206,7 @@ function CcEntriesModal({ block, onClose }: CcModalProps) {
   // EventFlat[] used for button availability + pre-populating state from DB
   const [eventsLoaded, setEventsLoaded] = useState(false);
   const [costCenters, setCostCenters] = useState<CostCenter[] | null>(null);
+  const [companies, setCompanies] = useState<Company[] | null>(null);
   const [loadingRegistry, setLoadingRegistry] = useState(false);
   const [registryError, setRegistryError] = useState<string | null>(null);
 
