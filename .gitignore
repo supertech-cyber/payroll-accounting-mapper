@@ -14,6 +14,9 @@ logs/*.log
 # Uploaded sample / test files (may contain payroll data)
 files/
 
+# Raw company/event spreadsheets used for seeding (contain accounting data)
+novas-empresas-eventos/
+
 venv
 
 # Python

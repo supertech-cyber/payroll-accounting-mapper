@@ -47,6 +47,7 @@ function buildMirrorPreviewGroups(
   eventsFlat: EventFlat[],
   costCenters: CostCenter[],
   batchMap: Map<string, number | null>,
+  companies: Company[],
 ): PreviewCompanyGroup[] {
   const eventByCode = new Map(eventsFlat.map((e) => [e.code, e]));
   const groups = new Map<string, PreviewCompanyGroup>();
@@ -63,7 +64,12 @@ function buildMirrorPreviewGroups(
     let mapped = 0,
       unmapped = 0,
       ignored = 0;
-    const ccForBlock = costCenters.find((cc) => cc.code === b.cost_center_code);
+    const company = companies.find((c) => c.code === b.company_code);
+    const ccForBlock = costCenters.find(
+      (cc) =>
+        cc.code === b.cost_center_code &&
+        (company ? cc.company_id === company.id : true),
+    );
     function checkCode(code: string) {
       const ev = eventByCode.get(code);
       if (!ev) {
@@ -233,12 +239,19 @@ function buildMirrorBlocks(
   eventsFlat: EventFlat[],
   costCenters: CostCenter[],
   batchMap: Map<string, number | null>,
+  companies: Company[],
 ): FpaBlock[] {
   const eventByCode = new Map(eventsFlat.map((e) => [e.code, e]));
   const blocks: FpaBlock[] = [];
 
   for (const b of data.blocks) {
-    const ccForBlock = costCenters.find((cc) => cc.code === b.cost_center_code);
+    const company = companies.find((c) => c.code === b.company_code);
+    const ccForBlock =
+      costCenters.find(
+        (cc) =>
+          cc.code === b.cost_center_code &&
+          (company ? cc.company_id === company.id : true),
+      ) ?? costCenters.find((cc) => cc.code === b.cost_center_code);
     const ccId = ccForBlock?.id ?? null;
 
     function resolveMapping(code: string) {
@@ -440,6 +453,7 @@ export default function ExportarPage() {
         eventsFlat,
         costCenters,
         companyFpaBatch,
+        companies,
       )
     : [];
   const prov13thGroups = provision13thData
@@ -499,6 +513,7 @@ export default function ExportarPage() {
             freshEvents,
             freshCCs,
             companyFpaBatch,
+            companies,
           ),
         );
       }

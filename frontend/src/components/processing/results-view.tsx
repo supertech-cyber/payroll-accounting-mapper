@@ -10,11 +10,12 @@ import type {
 import {
   fetchAllEventsWithMappings,
   fetchCostCenters,
+  fetchCompanies,
   upsertMapping,
   updateEvent,
   ensureEvent,
 } from "@/infrastructure/api/registry-gateway";
-import type { CostCenter, EventFlat } from "@/domain/registry/types";
+import type { Company, CostCenter, EventFlat } from "@/domain/registry/types";
 import styles from "./results-view.module.css";
 import type { PayrollBlock, EventItem } from "@/domain/payroll/types";
 
@@ -245,13 +246,19 @@ function CcEntriesModal({ block, onClose }: CcModalProps) {
     setLoadingRegistry(true);
     setRegistryError(null);
     try {
-      const [evFlats, ccs] = await Promise.all([
+      const [evFlats, ccs, comps] = await Promise.all([
         fetchAllEventsWithMappings(true),
         fetchCostCenters(),
+        fetchCompanies(),
       ]);
 
       const eventByCode = new Map(evFlats.map((e) => [e.code, e]));
-      const ccForBlock = ccs.find((cc) => cc.code === block.cost_center_code);
+      const company = comps.find((c) => c.code === block.company_code);
+      const ccForBlock = ccs.find(
+        (cc) =>
+          cc.code === block.cost_center_code &&
+          (company ? cc.company_id === company.id : true),
+      );
 
       // Pre-populate ignoredCodes from events that are inactive in DB
       const newIgnored = new Set<string>();
@@ -315,6 +322,7 @@ function CcEntriesModal({ block, onClose }: CcModalProps) {
       setSummaryMapped(newSummaryMapped);
 
       setCostCenters(ccs);
+      setCompanies(comps);
       setEventsLoaded(true);
     } catch (e) {
       setRegistryError((e as Error).message);
@@ -327,12 +335,25 @@ function CcEntriesModal({ block, onClose }: CcModalProps) {
     void loadRegistry();
   }
 
+  const companyForBlock = (companies ?? []).find(
+    (c) => c.code === block.company_code,
+  );
   const ccMap = new Map((costCenters ?? []).map((cc) => [cc.code, cc]));
 
+  function resolveBlockCc(ccCode: string | null | undefined) {
+    if (!ccCode) return undefined;
+    const ccs = costCenters ?? [];
+    return (
+      ccs.find(
+        (cc) =>
+          cc.code === ccCode &&
+          (companyForBlock ? cc.company_id === companyForBlock.id : true),
+      ) ?? ccMap.get(ccCode)
+    );
+  }
+
   function handleStartMap(entry: EventItem) {
-    const cc = block.cost_center_code
-      ? ccMap.get(block.cost_center_code)
-      : undefined;
+    const cc = resolveBlockCc(block.cost_center_code);
     const ctx = [
       block.cost_center_code,
       block.cost_center_name,
@@ -769,13 +790,19 @@ function ProvisionItemModal({ item, onClose }: ProvisionModalProps) {
     setLoadingRegistry(true);
     setRegistryError(null);
     try {
-      const [evFlats, ccs] = await Promise.all([
+      const [evFlats, ccs, comps] = await Promise.all([
         fetchAllEventsWithMappings(true),
         fetchCostCenters(),
+        fetchCompanies(),
       ]);
 
       const eventByCode = new Map(evFlats.map((e) => [e.code, e]));
-      const ccForItem = ccs.find((cc) => cc.code === item.cost_center_code);
+      const company = comps.find((c) => c.code === item.company_code);
+      const ccForItem = ccs.find(
+        (cc) =>
+          cc.code === item.cost_center_code &&
+          (company ? cc.company_id === company.id : true),
+      );
 
       const newIgnored = new Set<string>();
       const newMapped = new Map<string, { debit: string; credit: string }>();
@@ -818,8 +845,17 @@ function ProvisionItemModal({ item, onClose }: ProvisionModalProps) {
   const ccMap = new Map((costCenters ?? []).map((cc) => [cc.code, cc]));
 
   function handleStartMap(entry: ProvisionEntry) {
+    const companyForItem = (costCenters ?? []).find(
+      (cc) => cc.code === item.cost_center_code && cc.company_id != null,
+    );
     const cc = item.cost_center_code
-      ? ccMap.get(item.cost_center_code)
+      ? ((costCenters ?? []).find(
+          (cc) =>
+            cc.code === item.cost_center_code &&
+            (companyForItem
+              ? cc.company_id === companyForItem.company_id
+              : true),
+        ) ?? ccMap.get(item.cost_center_code))
       : undefined;
     const existing = mappedCodes.get(entry.entry_code);
     const ctx = [

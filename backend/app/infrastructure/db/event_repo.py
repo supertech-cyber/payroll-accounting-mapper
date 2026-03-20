@@ -177,14 +177,62 @@ class PgEventMappingRepository(EventMappingRepository):
         return result == "DELETE 1"
 
     async def resolve(
-        self, event_code: str, cost_center_code: str | None
+        self,
+        event_code: str,
+        cost_center_code: str | None,
+        company_code: str | None = None,
     ) -> EventMapping | None:
         """
-        Best-match lookup:
-          1. exact cost_center match (joined through cost_centers.code)
-          2. default mapping (cost_center_id IS NULL)
+        Best-match lookup (in priority order):
+          1. exact (event_code, cc_code, company_code) — company-specific mapping
+          2. exact (event_code, cc_code) any company — fallback for shared CCs
+          3. default mapping (cost_center_id IS NULL)
         """
         if cost_center_code is not None:
+            if company_code is not None:
+                # Priority 1 — prefer the CC that belongs to this company
+                row = await self._conn.fetchrow(
+                    """
+                    SELECT em.id, em.event_id, em.cost_center_id,
+                           em.credit_account, em.debit_account
+                    FROM event_mappings em
+                    JOIN events e ON e.id = em.event_id
+                    JOIN cost_centers cc ON cc.id = em.cost_center_id
+                    JOIN companies c ON c.id = cc.company_id
+                    WHERE e.code = $1 AND cc.code = $2 AND c.code = $3
+                    LIMIT 1
+                    """,
+                    event_code,
+                    cost_center_code,
+                    company_code,
+                )
+                if row:
+                    return _row_to_mapping(row)
+
+            # Priority 2 — same group (tag), any company in the group
+            # Handles multi-company groups that share a single set of CCs.
+            if company_code is not None:
+                row = await self._conn.fetchrow(
+                    """
+                    SELECT em.id, em.event_id, em.cost_center_id,
+                           em.credit_account, em.debit_account
+                    FROM event_mappings em
+                    JOIN events e ON e.id = em.event_id
+                    JOIN cost_centers cc ON cc.id = em.cost_center_id
+                    JOIN companies c ON c.id = cc.company_id
+                    WHERE e.code = $1
+                      AND cc.code = $2
+                      AND c.tag = (SELECT tag FROM companies WHERE code = $3)
+                    LIMIT 1
+                    """,
+                    event_code,
+                    cost_center_code,
+                    company_code,
+                )
+                if row:
+                    return _row_to_mapping(row)
+
+            # Priority 3 — any CC with matching code (legacy / no company context)
             row = await self._conn.fetchrow(
                 """
                 SELECT em.id, em.event_id, em.cost_center_id,

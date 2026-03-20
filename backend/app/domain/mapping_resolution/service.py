@@ -30,6 +30,7 @@ async def resolve_payroll_blocks(
             mapping_row = await mapping_repo.resolve(
                 event_code=event.event_code,
                 cost_center_code=block.cost_center_code,
+                company_code=block.company_code or None,
             )
 
             if mapping_row:

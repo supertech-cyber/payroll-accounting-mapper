@@ -57,7 +57,10 @@ class EventMappingRepository(ABC):
 
     @abstractmethod
     async def resolve(
-        self, event_code: str, cost_center_code: str | None
+        self,
+        event_code: str,
+        cost_center_code: str | None,
+        company_code: str | None = None,
     ) -> EventMapping | None:
-        # Exact CC match → default (NULL CC) match → None
+        # Priority: (event_code, cc_code, company_code) → (event_code, cc_code) → (event_code, NULL cc)
         ...
