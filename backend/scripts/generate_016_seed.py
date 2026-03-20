@@ -127,16 +127,14 @@ def parse_cc_header(header, empresa_counts):
     if m:
         return m.group(1), m.group(2).strip()
 
-    # "(Empresa) Name" → EMPRESA_N (sequential per group)
+    # "(Empresa) Name" → use full header text as code
     if h.startswith("(Empresa)"):
-        name = h[9:].strip()
-        empresa_counts[0] += 1
-        code = f"EMPRESA_{empresa_counts[0]}"
-        return code, name
+        name = h[9:].strip().rstrip(")")
+        return h, name
 
-    # "Colaboradores sem centro de custo" variants → SEM_CC
+    # "Colaboradores sem centro de custo" variants → use full text as code
     if "sem centro" in h.lower():
-        return "SEM_CC", h
+        return "Colaboradores sem centro de custo", "Colaboradores sem centro de custo"
 
     return None  # skip unknown / trailing None columns
 

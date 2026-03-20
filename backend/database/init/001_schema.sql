@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS companies (
 -- -------------------------------------------------------
 CREATE TABLE IF NOT EXISTS cost_centers (
     id          SERIAL       PRIMARY KEY,
-    code        VARCHAR(20)  NOT NULL,
+    code        VARCHAR(255) NOT NULL,
     name        VARCHAR(255) NOT NULL,
     company_id  INT          REFERENCES companies(id) ON DELETE SET NULL,
     created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW(),

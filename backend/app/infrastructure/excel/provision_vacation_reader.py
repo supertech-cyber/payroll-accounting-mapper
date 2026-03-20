@@ -39,9 +39,17 @@ def _is_cost_center_row(text: str) -> bool:
 
 
 def _parse_cost_center(text: str) -> tuple[str, str]:
+    """Extract (code, name) from 'TOTAL CENTRO DE CUSTO : ...' lines.
+
+    Numeric: 'TOTAL CENTRO DE CUSTO : 1 - Administrativo' → ('1', 'Administrativo')
+    Text:    'TOTAL CENTRO DE CUSTO : (Empresa) Agefer Comercio e Cereais LTDA'
+             → ('(Empresa) Agefer Comercio e Cereais LTDA', same)
+    """
     match = re.match(r"TOTAL CENTRO DE CUSTO\s*:\s*(\d+)\s*-\s*(.+)$", text)
     if not match:
-        return "", text
+        m2 = re.match(r"TOTAL CENTRO DE CUSTO\s*:\s*(.+)$", text, re.IGNORECASE)
+        rest = m2.group(1).strip() if m2 else text
+        return rest, rest
     return match.group(1), match.group(2).strip()
 
 

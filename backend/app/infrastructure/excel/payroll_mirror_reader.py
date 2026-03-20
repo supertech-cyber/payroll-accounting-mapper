@@ -44,10 +44,17 @@ def _parse_competence(text: str) -> str:
     return f"{match.group(2)}-{month}"
 
 
-def _parse_cost_center(text: str) -> tuple[str | None, str | None]:
+def _parse_cost_center(text: str) -> tuple[str, str]:
+    """Extract (code, name) from the CC label next to 'Centro de Custo :'.
+
+    Numeric layout: '1 - Administrativo'  → ('1', 'Administrativo')
+    Text-only:      'Colaboradores sem centro de custo'
+                    '(Empresa) Agefer Comercio e Cereais LTDA'
+                    → use full text as both code and name.
+    """
     match = re.match(r"(\d+)\s*-\s*(.+)$", text)
     if not match:
-        return None, None
+        return text, text
     return match.group(1), match.group(2).strip()
 
 
