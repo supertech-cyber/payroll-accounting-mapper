@@ -17,6 +17,9 @@ files/
 # Raw company/event spreadsheets used for seeding (contain accounting data)
 novas-empresas-eventos/
 
+# Bug reproduction files (may contain payroll data)
+bug/
+
 venv
 
 # Python

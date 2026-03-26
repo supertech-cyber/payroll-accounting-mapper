@@ -65,11 +65,27 @@ function buildMirrorPreviewGroups(
       unmapped = 0,
       ignored = 0;
     const company = companies.find((c) => c.code === b.company_code);
-    const ccForBlock = costCenters.find(
-      (cc) =>
-        cc.code === b.cost_center_code &&
-        (company ? cc.company_id === company.id : true),
-    );
+    // Priority 1: exact match for this company
+    let ccForBlock = company
+      ? costCenters.find(
+          (cc) =>
+            cc.code === b.cost_center_code && cc.company_id === company.id,
+        )
+      : undefined;
+    // Priority 2: same-tag company (shared CC pool within a group)
+    if (!ccForBlock && company?.tag) {
+      const sameTagIds = new Set(
+        companies.filter((c) => c.tag === company.tag).map((c) => c.id),
+      );
+      ccForBlock = costCenters.find(
+        (cc) =>
+          cc.code === b.cost_center_code && sameTagIds.has(cc.company_id ?? -1),
+      );
+    }
+    // Priority 3: legacy fallback — any company with this CC code
+    if (!ccForBlock) {
+      ccForBlock = costCenters.find((cc) => cc.code === b.cost_center_code);
+    }
     function checkCode(code: string) {
       const ev = eventByCode.get(code);
       if (!ev) {
@@ -130,12 +146,33 @@ function buildProvisionBlocks(
   eventsFlat: EventFlat[],
   costCenters: CostCenter[],
   batchMap: Map<string, number | null>,
+  companies: Company[],
 ): FpaBlock[] {
   const eventByCode = new Map(eventsFlat.map((e) => [e.code, e]));
   return data.items.map((item) => {
-    const ccForItem = costCenters.find(
-      (cc) => cc.code === item.cost_center_code,
-    );
+    const company = companies.find((c) => c.code === item.company_code);
+    // Priority 1: exact match for this company
+    let ccForItem = company
+      ? costCenters.find(
+          (cc) =>
+            cc.code === item.cost_center_code && cc.company_id === company.id,
+        )
+      : undefined;
+    // Priority 2: same-tag company (shared CC pool within a group)
+    if (!ccForItem && company?.tag) {
+      const sameTagIds = new Set(
+        companies.filter((c) => c.tag === company.tag).map((c) => c.id),
+      );
+      ccForItem = costCenters.find(
+        (cc) =>
+          cc.code === item.cost_center_code &&
+          sameTagIds.has(cc.company_id ?? -1),
+      );
+    }
+    // Priority 3: legacy fallback — any company with this CC code
+    if (!ccForItem) {
+      ccForItem = costCenters.find((cc) => cc.code === item.cost_center_code);
+    }
     const ccId = ccForItem?.id ?? null;
     // Use amount_difference (period movement), not the full accumulated balance
     const validEntries = item.entries.filter((e) => e.amount_difference !== 0);
@@ -246,12 +283,27 @@ function buildMirrorBlocks(
 
   for (const b of data.blocks) {
     const company = companies.find((c) => c.code === b.company_code);
-    const ccForBlock =
-      costCenters.find(
+    // Priority 1: exact match for this company
+    let ccForBlock = company
+      ? costCenters.find(
+          (cc) =>
+            cc.code === b.cost_center_code && cc.company_id === company.id,
+        )
+      : undefined;
+    // Priority 2: same-tag company (shared CC pool within a group)
+    if (!ccForBlock && company?.tag) {
+      const sameTagIds = new Set(
+        companies.filter((c) => c.tag === company.tag).map((c) => c.id),
+      );
+      ccForBlock = costCenters.find(
         (cc) =>
-          cc.code === b.cost_center_code &&
-          (company ? cc.company_id === company.id : true),
-      ) ?? costCenters.find((cc) => cc.code === b.cost_center_code);
+          cc.code === b.cost_center_code && sameTagIds.has(cc.company_id ?? -1),
+      );
+    }
+    // Priority 3: legacy fallback — any company with this CC code
+    if (!ccForBlock) {
+      ccForBlock = costCenters.find((cc) => cc.code === b.cost_center_code);
+    }
     const ccId = ccForBlock?.id ?? null;
 
     function resolveMapping(code: string) {
@@ -525,6 +577,7 @@ export default function ExportarPage() {
             freshEvents,
             freshCCs,
             companyFpaBatch,
+            companies,
           ),
         );
       }
@@ -535,6 +588,7 @@ export default function ExportarPage() {
             freshEvents,
             freshCCs,
             companyFpaBatch,
+            companies,
           ),
         );
       }
